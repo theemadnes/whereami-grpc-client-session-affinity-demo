@@ -20,77 +20,79 @@ except ImportError:
     sys.exit(1)
 
 
-def run(server_address: str):
+def run(server_address: str, count: int):
     """
-    Connects to the gRPC server, calls GetPayload, and prints request/response
-    headers and the response payload.
+    Connects to the gRPC server, calls GetPayload in a loop, and prints
+    request/response headers and the response payload for each call.
     """
     print(f"Attempting to connect to gRPC server at: {server_address}")
     try:
         # Create an insecure channel to the gRPC server.
         # For production environments, consider using secure channels (SSL/TLS).
+        # The channel is created once and reused for all requests in the loop.
         with grpc.insecure_channel(server_address) as channel:
             # Create a gRPC stub for the Whereami service
             stub = whereami_pb2_grpc.WhereamiStub(channel)
 
-            print("Calling Whereami.GetPayload()...")
-            # Create an empty request message as defined in whereami.proto
-            request = whereami_pb2.Empty()
+            for i in range(count):
+                print(f"\n===== Request {i + 1} of {count} =====")
+                print("Calling Whereami.GetPayload()...")
+                # Create an empty request message as defined in whereami.proto
+                request = whereami_pb2.Empty()
 
-            # Define some request headers (metadata) to send with the call.
-            request_headers = [
-                ('client-name', 'whereami-python-cli'),
-                ('client-version', '1.0.0'),
-            ]
+                # Define some request headers (metadata) to send with the call.
+                request_headers = [
+                    ('client-name', 'whereami-python-cli'),
+                    ('client-version', '1.0.0'),
+                    ('request-id', str(i + 1)), # Add a unique ID for each request
+                ]
 
-            print("\n--- gRPC Request Headers ---")
-            for key, value in request_headers:
-                print(f"{key}: {value}")
-
-            # Call the RPC method using `with_call` to get the call object,
-            # which provides access to response metadata (headers).
-            response, call = stub.GetPayload.with_call(
-                request,
-                metadata=request_headers
-            )
-
-            print("\n--- gRPC Response Headers (Initial Metadata) ---")
-            initial_metadata = call.initial_metadata()
-            if initial_metadata:
-                for key, value in initial_metadata:
+                print("\n--- gRPC Request Headers ---")
+                for key, value in request_headers:
                     print(f"{key}: {value}")
-            else:
-                print("No initial metadata received.")
 
+                # Call the RPC method using `with_call` to get the call object,
+                # which provides access to response metadata (headers).
+                response, call = stub.GetPayload.with_call(
+                    request,
+                    metadata=request_headers
+                )
 
-            print("\n--- gRPC Response Payload (Full Message) ---")
-            # The default __str__ representation of a protobuf message is quite readable
-            print(response)
-
-            print("\n--- gRPC Response Details (Individual Fields) ---")
-            # Iterate through the fields of the WhereamiReply message and print them
-            # This explicitly shows each "header" or piece of metadata returned.
-            for field_descriptor, value in response.ListFields():
-                # For nested messages like 'backend_result', print its string representation
-                if field_descriptor.type == field_descriptor.TYPE_MESSAGE:
-                    print(f"{field_descriptor.name}:")
-                    # Indent nested message fields for better readability
-                    # This handles the recursive 'backend_result' field gracefully.
-                    if hasattr(value, 'ListFields'): # Check if it's a protobuf message
-                        for nested_field_descriptor, nested_value in value.ListFields():
-                            print(f"  {nested_field_descriptor.name}: {nested_value}")
-                    else: # Fallback for non-protobuf message objects if any
-                        print(f"  {value}")
+                print("\n--- gRPC Response Headers (Initial Metadata) ---")
+                initial_metadata = call.initial_metadata()
+                if initial_metadata:
+                    for key, value in initial_metadata:
+                        print(f"{key}: {value}")
                 else:
-                    print(f"{field_descriptor.name}: {value}")
+                    print("No initial metadata received.")
 
-            print("\n--- gRPC Response Headers (Trailing Metadata) ---")
-            trailing_metadata = call.trailing_metadata()
-            if trailing_metadata:
-                for key, value in trailing_metadata:
-                    print(f"{key}: {value}")
-            else:
-                print("No trailing metadata received.")
+
+                print("\n--- gRPC Response Payload (Full Message) ---")
+                # The default __str__ representation of a protobuf message is quite readable
+                print(response)
+
+                print("\n--- gRPC Response Details (Individual Fields) ---")
+                # Iterate through the fields of the WhereamiReply message and print them
+                for field_descriptor, value in response.ListFields():
+                    # For nested messages like 'backend_result', print its string representation
+                    if field_descriptor.type == field_descriptor.TYPE_MESSAGE:
+                        print(f"{field_descriptor.name}:")
+                        # Indent nested message fields for better readability
+                        if hasattr(value, 'ListFields'): # Check if it's a protobuf message
+                            for nested_field_descriptor, nested_value in value.ListFields():
+                                print(f"  {nested_field_descriptor.name}: {nested_value}")
+                        else: # Fallback for non-protobuf message objects if any
+                            print(f"  {value}")
+                    else:
+                        print(f"{field_descriptor.name}: {value}")
+
+                print("\n--- gRPC Response Headers (Trailing Metadata) ---")
+                trailing_metadata = call.trailing_metadata()
+                if trailing_metadata:
+                    for key, value in trailing_metadata:
+                        print(f"{key}: {value}")
+                else:
+                    print("No trailing metadata received.")
 
     except grpc.RpcError as e:
         print(f"\n--- gRPC Error ---", file=sys.stderr)
@@ -116,9 +118,15 @@ def main():
         type=str,
         help="The address of the gRPC server (e.g., 'localhost:50051', '127.0.0.1:8080')."
     )
+    parser.add_argument(
+        "-c", "--count",
+        type=int,
+        default=1,
+        help="The number of times to send the request. Defaults to 1."
+    )
     args = parser.parse_args()
 
-    run(args.server_address)
+    run(args.server_address, args.count)
 
 
 if __name__ == "__main__":
