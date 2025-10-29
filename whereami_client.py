@@ -22,8 +22,8 @@ except ImportError:
 
 def run(server_address: str):
     """
-    Connects to the gRPC server at the given address and calls the GetPayload method.
-    Prints the response and its individual fields.
+    Connects to the gRPC server, calls GetPayload, and prints request/response
+    headers and the response payload.
     """
     print(f"Attempting to connect to gRPC server at: {server_address}")
     try:
@@ -37,10 +37,33 @@ def run(server_address: str):
             # Create an empty request message as defined in whereami.proto
             request = whereami_pb2.Empty()
 
-            # Call the RPC method
-            response = stub.GetPayload(request)
+            # Define some request headers (metadata) to send with the call.
+            request_headers = [
+                ('client-name', 'whereami-python-cli'),
+                ('client-version', '1.0.0'),
+            ]
 
-            print("\n--- gRPC Response (Full Message) ---")
+            print("\n--- gRPC Request Headers ---")
+            for key, value in request_headers:
+                print(f"{key}: {value}")
+
+            # Call the RPC method using `with_call` to get the call object,
+            # which provides access to response metadata (headers).
+            response, call = stub.GetPayload.with_call(
+                request,
+                metadata=request_headers
+            )
+
+            print("\n--- gRPC Response Headers (Initial Metadata) ---")
+            initial_metadata = call.initial_metadata()
+            if initial_metadata:
+                for key, value in initial_metadata:
+                    print(f"{key}: {value}")
+            else:
+                print("No initial metadata received.")
+
+
+            print("\n--- gRPC Response Payload (Full Message) ---")
             # The default __str__ representation of a protobuf message is quite readable
             print(response)
 
@@ -60,6 +83,14 @@ def run(server_address: str):
                         print(f"  {value}")
                 else:
                     print(f"{field_descriptor.name}: {value}")
+
+            print("\n--- gRPC Response Headers (Trailing Metadata) ---")
+            trailing_metadata = call.trailing_metadata()
+            if trailing_metadata:
+                for key, value in trailing_metadata:
+                    print(f"{key}: {value}")
+            else:
+                print("No trailing metadata received.")
 
     except grpc.RpcError as e:
         print(f"\n--- gRPC Error ---", file=sys.stderr)
