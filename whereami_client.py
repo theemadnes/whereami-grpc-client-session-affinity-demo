@@ -71,7 +71,7 @@ def run(server_address: str, count: int):
                 # The default __str__ representation of a protobuf message is quite readable
                 print(response)
 
-                print("\n--- gRPC Response Details (Individual Fields) ---")
+                '''print("\n--- gRPC Response Details (Individual Fields) ---")
                 # Iterate through the fields of the WhereamiReply message and print them
                 for field_descriptor, value in response.ListFields():
                     # For nested messages like 'backend_result', print its string representation
@@ -84,7 +84,7 @@ def run(server_address: str, count: int):
                         else: # Fallback for non-protobuf message objects if any
                             print(f"  {value}")
                     else:
-                        print(f"{field_descriptor.name}: {value}")
+                        print(f"{field_descriptor.name}: {value}")'''
 
                 print("\n--- gRPC Response Headers (Trailing Metadata) ---")
                 trailing_metadata = call.trailing_metadata()
