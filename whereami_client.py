@@ -9,8 +9,8 @@ import os
 # or in a directory that's on the Python path.
 # We'll assume they are generated in the current directory for simplicity.
 try:
-    import protos.whereami_pb2
-    import protos.whereami_pb2_grpc
+    from protos import whereami_pb2
+    from protos import whereami_pb2_grpc
 except ImportError:
     print("Error: Could not import generated protobuf files.", file=sys.stderr)
     print("Please ensure you have generated 'whereami_pb2.py' and 'whereami_pb2_grpc.py'.", file=sys.stderr)
