@@ -47,8 +47,9 @@ def run(server_address: str, count: int):
                     ('request-id', str(i + 1)), # Add a unique ID for each request
                 ]
 
-                # Add User-Session header with alternating values for session affinity
-                session_value = "ABCDEFG" if i % 2 == 0 else "HIJKLMN"
+                # Add User-Session header with rotating values for session affinity
+                session_values = ["ABCDEFG", "HIJKLMN", "OPQRSTU", "VWXYZ0"]
+                session_value = session_values[i % len(session_values)]
                 request_headers.append(('user-session', session_value))
 
                 print("\n--- gRPC Request Headers ---")
