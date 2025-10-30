@@ -49,7 +49,7 @@ def run(server_address: str, count: int):
 
                 # Add User-Session header with alternating values for session affinity
                 session_value = "userA" if i % 2 == 0 else "userB"
-                request_headers.append(('User-Session', session_value))
+                request_headers.append(('user-session', session_value))
 
                 print("\n--- gRPC Request Headers ---")
                 for key, value in request_headers:
