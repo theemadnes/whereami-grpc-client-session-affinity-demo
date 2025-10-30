@@ -48,7 +48,7 @@ def run(server_address: str, count: int):
                 ]
 
                 # Add User-Session header with rotating values for session affinity
-                session_values = ["ABCDEFG", "HIJKLMN", "OPQRSTU", "VWXYZ0"]
+                session_values = ["ABCDEFG", "HIJKLMN", "OPQRSTU", "VWXYZ0", "123456", "7890AB"]
                 session_value = session_values[i % len(session_values)]
                 request_headers.append(('user-session', session_value))
 
