@@ -10,7 +10,7 @@ first, make sure you activate the Python virtual environment and install the req
 # export values
 export PROJECT_ID=e2m-private-test-01 # replace with your project ID
 export REGION=us-central1 # replace with your region
-export FORWARDING_RULE=grpc-ilb-gke-forwarding-rule
+export FORWARDING_RULE=grpc-ilb-gke-forwarding-rule # assuming you followed https://github.com/theemadnes/l7-rilb-gRPC-header-field-demo
 
 # get LB VIP
 LB_VIP=$(gcloud compute forwarding-rules describe $FORWARDING_RULE \
